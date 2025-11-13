@@ -146,7 +146,7 @@ async function run() {
     });
 
     
-// Example: GET /search?query=work&category=Fitness
+
 app.get("/search", async (req, res) => {
   const { query, category } = req.query;
 
@@ -154,7 +154,7 @@ app.get("/search", async (req, res) => {
   const filter = {};
 
   if (query) {
-    filter.title = { $regex: query, $options: "i" }; // case-insensitive search
+    filter.title = { $regex: query, $options: "i" }; 
   }
 
   if (category && category !== "All") {
@@ -202,7 +202,7 @@ app.get("/search", async (req, res) => {
       res.send(result);
     });
 
-    // Update user habit by ID
+    
     app.patch("/UserData/:id", async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
@@ -230,7 +230,7 @@ app.get("/search", async (req, res) => {
       }
     });
 
-    // Mark habit complete
+   
     // PATCH /habitDetails/:id/complete
     app.patch("/habitDetails/:id/complete", async (req, res) => {
       const { id } = req.params;
