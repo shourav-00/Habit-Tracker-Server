@@ -145,6 +145,32 @@ async function run() {
       }
     });
 
+    
+// Example: GET /search?query=work&category=Fitness
+app.get("/search", async (req, res) => {
+  const { query, category } = req.query;
+
+  
+  const filter = {};
+
+  if (query) {
+    filter.title = { $regex: query, $options: "i" }; // case-insensitive search
+  }
+
+  if (category && category !== "All") {
+    filter.category = category;
+  }
+
+  try {
+    const result = await publicHabitsCOLL.find(filter).toArray();
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+
+
     app.get("/UserDat/:id", async (req, res) => {
       const id = req.params.id;
       try {
