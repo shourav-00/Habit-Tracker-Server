@@ -176,44 +176,7 @@ app.get("/habit/:id", async (req, res) => {
 });
 
 
-        
-    // Mark habit as complete (add today to completionHistory)
-//    app.patch("/habitDetailsString/:id/complete", async (req, res) => {
-//   const id = req.params.id;
-//   const todayStr = new Date().toDateString(); // store as string
-
-//   try {
-//     // Find habit by string ID
-//     const habit = await publicHabitsCOLL.findOne({ _id: id });
-//     if (!habit) return res.status(404).send({ message: "Habit not found" });
-
-//     // Initialize array if undefined
-//     if (!habit.completionHistory) habit.completionHistory = [];
-
-//     // Check if already completed today
-//     if (habit.completionHistory.includes(todayStr)) {
-//       return res.status(400).send({ message: "Already completed today!" });
-//     }
-
-//     // Add today to completionHistory
-//     const result = await publicHabitsCOLL.updateOne(
-//       { _id: id },
-//       { $push: { completionHistory: todayStr } } // use $push to keep order
-//     );
-
-//     // Fetch updated habit
-//     const updatedHabit = await publicHabitsCOLL.findOne({ _id: id });
-
-//     res.send({
-//       message: "Habit marked complete!",
-//       completionHistory: updatedHabit.completionHistory,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send({ message: "Internal Server Error", error: err.message });
-//   }
-// });
-
+ 
 
 // Mark habit complete
 // PATCH /habitDetails/:id/complete
