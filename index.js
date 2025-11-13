@@ -11,7 +11,8 @@ require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const uri =
-  "mongodb+srv://Habit-Tracker:yX1CDCntEh1l4IIc@cluster0.btpwoe8.mongodb.net/?appName=Cluster0";
+  // "mongodb+srv://Habit-Tracker:yX1CDCntEh1l4IIc@cluster0.btpwoe8.mongodb.net/?appName=Cluster0";
+  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.btpwoe8.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -58,8 +59,75 @@ async function run() {
       res.send(result);
     });
 
-   
-    
+   app.get("/habitDetails/:id", async (req, res) => {
+  const habitId = req.params.id; // this is a string
+  try {
+    const habit = await publicHabitsCOLL.findOne({ _id: habitId }); // use string directly
+    if (!habit) return res.status(404).json({ message: "Habit not found" });
+    res.json(habit);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+});
+
+  // Mark habit as complete for today (string _id) using $push
+// Mark habit as complete for today (string _id) safely
+// Mark public habit as complete (string _id)
+app.patch("/User/:id/complete", async (req, res) => {
+  const { id } = req.params;
+  const todayStr = new Date().toDateString();
+
+  try {
+    // Find habit from USER HABITS collection
+    const habit = await AddedHabitCOLL.findOne({ _id: new ObjectId(id) });
+    if (!habit) return res.status(404).send({ message: "Habit not found" });
+
+    // Initialize array if undefined
+    if (!habit.completionHistory) habit.completionHistory = [];
+
+    // Prevent duplicate same-day completion
+    if (habit.completionHistory.includes(todayStr)) {
+      return res.status(400).send({ message: "Already completed today!" });
+    }
+
+    // Push today's date
+    await AddedHabitCOLL.updateOne(
+      { _id: new ObjectId(id) },
+      { $push: { completionHistory: todayStr } }
+    );
+
+    // Fetch updated habit
+    const updatedHabit = await AddedHabitCOLL.findOne({ _id: new ObjectId(id) });
+
+    // Calculate streak
+    const sortedDates = updatedHabit.completionHistory
+      .map(d => new Date(d))
+      .sort((a, b) => b - a);
+
+    let streak = 0;
+    let prevDate = new Date();
+    for (let date of sortedDates) {
+      const diff = (prevDate - date) / (1000 * 60 * 60 * 24);
+      if (diff === 0 || diff === 1) {
+        streak++;
+        prevDate = date;
+      } else break;
+    }
+
+    res.send({
+      message: "Habit marked complete!",
+      completionHistory: updatedHabit.completionHistory,
+      streak,
+    });
+  } catch (err) {
+    console.error("Error completing user habit:", err);
+    res.status(500).send({ message: "Internal Server Error", error: err.message });
+  }
+});
+
+
+
+  
     app.get("/UserData/:id", async (req, res) => {
       const id = req.params.id;
       try {
@@ -110,31 +178,90 @@ app.get("/habit/:id", async (req, res) => {
 
         
     // Mark habit as complete (add today to completionHistory)
-    app.patch("/UserData/:id/complete", async (req, res) => {
-      const id = req.params.id;
-      const today = new Date().toDateString();
+//    app.patch("/habitDetailsString/:id/complete", async (req, res) => {
+//   const id = req.params.id;
+//   const todayStr = new Date().toDateString(); // store as string
 
-      try {
-        const result = await AddedHabitCOLL.updateOne(
-          { _id: new ObjectId(id) },
-          { $addToSet: { completionHistory: today } } // adds today if not exists
-        );
+//   try {
+//     // Find habit by string ID
+//     const habit = await publicHabitsCOLL.findOne({ _id: id });
+//     if (!habit) return res.status(404).send({ message: "Habit not found" });
 
-        if (result.matchedCount === 0) {
-          return res.status(404).send({ message: "Habit not found" });
-        }
+//     // Initialize array if undefined
+//     if (!habit.completionHistory) habit.completionHistory = [];
 
-        if (result.modifiedCount === 0) {
-          return res.status(400).send({ message: "Already completed today!" });
-        }
+//     // Check if already completed today
+//     if (habit.completionHistory.includes(todayStr)) {
+//       return res.status(400).send({ message: "Already completed today!" });
+//     }
 
-        // Return updated habit
-        const updatedHabit = await AddedHabitCOLL.findOne({ _id: new ObjectId(id) });
-        res.send({ completionHistory: updatedHabit.completionHistory });
-      } catch (err) {
-        res.status(500).send({ message: err.message });
-      }
-    });
+//     // Add today to completionHistory
+//     const result = await publicHabitsCOLL.updateOne(
+//       { _id: id },
+//       { $push: { completionHistory: todayStr } } // use $push to keep order
+//     );
+
+//     // Fetch updated habit
+//     const updatedHabit = await publicHabitsCOLL.findOne({ _id: id });
+
+//     res.send({
+//       message: "Habit marked complete!",
+//       completionHistory: updatedHabit.completionHistory,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send({ message: "Internal Server Error", error: err.message });
+//   }
+// });
+
+
+// Mark habit complete
+// PATCH /habitDetails/:id/complete
+app.patch("/habitDetails/:id/complete", async (req, res) => {
+  const { id } = req.params;
+  const todayStr = new Date().toDateString();
+
+  try {
+    // Find habit with string id
+    const habit = await publicHabitsCOLL.findOne({ _id: id }); // <-- no ObjectId
+    if (!habit) return res.status(404).send({ message: "Habit not found" });
+
+    if (!habit.completionHistory) habit.completionHistory = [];
+
+    if (habit.completionHistory.includes(todayStr)) {
+      return res.status(400).send({ message: "Already completed today!" });
+    }
+
+    // Push today's date
+    await publicHabitsCOLL.updateOne(
+      { _id: id }, // <-- no ObjectId
+      { $push: { completionHistory: todayStr } }
+    );
+
+    const updatedHabit = await publicHabitsCOLL.findOne({ _id: id });
+
+    // Calculate streak
+    const sortedDates = updatedHabit.completionHistory
+      .map(d => new Date(d))
+      .sort((a, b) => b - a);
+
+    let streak = 0;
+    let prevDate = new Date();
+    for (let date of sortedDates) {
+      const diff = (prevDate - date) / (1000 * 60 * 60 * 24);
+      if (diff === 0 || diff === 1) {
+        streak++;
+        prevDate = date;
+      } else break;
+    }
+
+    res.send({ completionHistory: updatedHabit.completionHistory, streak });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+
 
     
 
