@@ -9,4 +9,8 @@ This is the **backend** of the Habit Tracker project. It provides APIs for manag
 - **Search & Filter**: Search habits by title or keyword and filter by category.  
 - **Update Habits**: Update habit details including title, description, category, time, and image.  
 - **Completion Tracking**: Mark habits as completed and track streaks.  
-- **Category Management**: Supports categories like Morning, Work, Fitness, Evening, Study. 
+- **Category Management**: Supports categories like Morning, Work, Fitness, Evening, Study.
+
+
+
+contact:shouravchowdhury400@gmail.com
